@@ -1,4 +1,6 @@
-import os
+# Este script realiza o acesso ao site da ANEEL, o download das bases referente aos anos de 2023 e 2024 nas respectivas pastas assinaladas após descompactar as pastas. Ao acessar 
+o site da ANEEL é necessário escrever manualmente 'BDGD2023' e 'BDGD2024' para analisar as bases #
+
 import time
 import zipfile
 from pathlib import Path
@@ -28,7 +30,7 @@ def abrir_navegador(destino_pasta):
     return webdriver.Edge(options=options)
 
 # Aguardar download #
-def aguardar_download_concluir(destino_pasta, limite=600):
+def concluir_download(destino_pasta, limite=600):
     pasta = Path(destino_pasta)
     start = time.time()
 
@@ -71,7 +73,7 @@ def download_bdgd(destino_pasta, ano):
         print(f"Pesquise por CEMIG ano {ano} ")
         input("eNTER quando iniciar iniciar download ")
 
-        arquivo = aguardar_download_concluir(destino)
+        arquivo = concluir_download(destino)
 
         if arquivo:
             print("Extrair arquivo zip")
@@ -83,30 +85,23 @@ def download_bdgd(destino_pasta, ano):
 
 # Extrair arquivo zip #
 def extrair_zip(zip_path, destino):
-    zip_path = Path(zip_path)
+    destino = Path(destino)
 
-    caminho_2023 = Path(r"C:\TCC_Ana\Arquivos_ANA")
-    caminho_2024 = Path(r"C:\TCC_Ana\2023")
+    with zipfile.ZipFile(zip_path, "r") as z:
 
-    # Caminho final #
-    if str(destino) == str(caminho_2023):
-        destino_final = caminho_2023
-    elif str(destino) == str(caminho_2024):
-        destino_final = caminho_2024
-    else:
-        destino_final = Path(destino) 
-
-    with zipfile.ZipFile(zip_path, 'r') as z:
-        gdb_folders = [x.split("/")[0] for x in z.namelist() if x.endswith(".gdb/")]
+        gdb_folders = [
+            x.split("/")[0]
+            for x in z.namelist()
+            if x.endswith(".gdb/")
+        ]
 
         if gdb_folders:
-            folder_name = gdb_folders[0]
-            pasta_antiga = destino_final / folder_name
+            pasta_antiga = destino / gdb_folders[0]
 
             if pasta_antiga.exists():
                 shutil.rmtree(pasta_antiga)
-        z.extractall(destino_final)
-    print(f"Arquivo extraído")
+
+        z.extractall(destino)
 
 # Executar dados #
 def executar_processamentos():
@@ -116,13 +111,8 @@ def executar_processamentos():
     mod2023 = import_module_from_path("mod2023", path2023)
     mod2024 = import_module_from_path("mod2024", path2024)
 
-    print("Executando 2023")
     mod2023.processar_2023()
-
-    print("Executando 2024")
-    mod2024.processar_2023()
-
-    print("pronto")
+    mod2024.processar_2024()
 
 # Main #
 if __name__ == "__main__":
