@@ -1,0 +1,42 @@
+# Este script acessa o arquivo descompactado na pasta indicada e trata as camadas no QGIS. O filtro utilizado para selecionar os dados é "ULA".
+
+from pathlib import Path
+import pyogrio
+import pandas as pd
+
+BDGD_2023 = Path(r"C:\TCC_V02\BDGD_2023")
+BDGD_2024 = Path(r"C:\TCC_V02\BDGD_2024")
+
+def exportar_camadas_bdgd(base_path: Path):
+    gdb = max(base_path.glob("Cemig-D*.gdb"), key=lambda p: p.stat().st_mtime)
+
+    # Leitura da camada CTMT #
+    ctmt = pyogrio.read_dataframe(gdb, layer="CTMT", use_arrow=False)
+
+    # Filtrar alimentadores ULA #
+    ctmt_ula = ctmt[ctmt["NOME"].astype(str).str.startswith("ULA")]
+
+    # Códigos dos alimentadores
+    lista_ctmt = ctmt_ula["COD_ID"].astype(str).unique().tolist()
+
+    lista_ctmt_sql = ",".join(f"'{c}'" for c in lista_ctmt)
+
+    where_ctmt = f"CTMT IN ({lista_ctmt_sql})"
+
+    ctmt_ula.to_csv(base_path / "CTMT.csv", sep=";", index=False)
+
+    # Fitrar as camadas necessárias#
+    camadas = ["UCBT_tab", "UCMT_tab", "UGBT_tab", "UGMT_tab", "UNTRMT", "SSDMT", "SSDBT"]
+
+    # Exportar as entidades #
+    for layer in camadas:
+        df = pyogrio.read_dataframe(gdb, layer=layer, where=where_ctmt, use_arrow=False)
+        df.to_csv(base_path / f"{layer}.csv", sep=";", index=False)
+
+if __name__ == "__main__":
+
+    print("\nBDGD 2023")
+    exportar_camadas_bdgd(BDGD_2023, "UBERLANDIA")
+
+    print("\nBDGD 2024")
+    exportar_camadas_bdgd(BDGD_2024, "UBERLANDIA")
