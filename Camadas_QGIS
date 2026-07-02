@@ -36,7 +36,7 @@ def exportar_camadas_bdgd(base_path: Path):
 if __name__ == "__main__":
 
     print("\nBDGD 2023")
-    exportar_camadas_bdgd(BDGD_2023, "UBERLANDIA")
+    exportar_camadas_bdgd(BDGD_2023)
 
     print("\nBDGD 2024")
-    exportar_camadas_bdgd(BDGD_2024, "UBERLANDIA")
+    exportar_camadas_bdgd(BDGD_2024)
